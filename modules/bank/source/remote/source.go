@@ -6,11 +6,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/forbole/juno/v4/node/remote"
+	"github.com/forbole/juno/v5/node/remote"
 
-	bankkeeper "github.com/forbole/bdjuno/v4/modules/bank/source"
-	pricefeed "github.com/forbole/bdjuno/v4/modules/pricefeed"
-	"github.com/forbole/bdjuno/v4/types"
+	bankkeeper "github.com/forbole/callisto/v4/modules/bank/source"
+	"github.com/forbole/callisto/v4/types"
 )
 
 var (
@@ -31,22 +30,19 @@ func NewSource(source *remote.Source, bankClient banktypes.QueryClient) *Source 
 }
 
 // GetBalances implements bankkeeper.Source
-func (s Source) GetBalances(addresses []string, height int64) ([]types.NativeTokenAmount, error) {
+func (s Source) GetBalances(addresses []string, height int64) ([]types.AccountBalance, error) {
 	ctx := remote.GetHeightRequestContext(s.Ctx, height)
 
-	var balances []types.NativeTokenAmount
+	var balances []types.AccountBalance
 	for _, address := range addresses {
-		balRes, err := s.bankClient.Balance(ctx, &banktypes.QueryBalanceRequest{
-			Address: address,
-			Denom:   pricefeed.GetDenom(),
-		})
+		balRes, err := s.bankClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{Address: address})
 		if err != nil {
 			return nil, fmt.Errorf("error while getting all balances: %s", err)
 		}
 
-		balances = append(balances, types.NewNativeTokenAmount(
+		balances = append(balances, types.NewAccountBalance(
 			address,
-			balRes.Balance.Amount,
+			balRes.Balances,
 			height,
 		))
 	}

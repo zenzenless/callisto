@@ -4,12 +4,12 @@ import (
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/types/query"
-	"github.com/forbole/juno/v4/node/remote"
+	"github.com/forbole/juno/v5/node/remote"
 	"github.com/rs/zerolog/log"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	source "github.com/forbole/bdjuno/v4/modules/auth/source"
+	source "github.com/forbole/callisto/v4/modules/auth/source"
 )
 
 var (

@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	distritypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/forbole/bdjuno/v4/modules/utils"
-	juno "github.com/forbole/juno/v4/types"
+	"github.com/forbole/callisto/v4/modules/utils"
+	juno "github.com/forbole/juno/v5/types"
 	"github.com/gogo/protobuf/proto"
 )
 

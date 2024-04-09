@@ -3,6 +3,8 @@ package bank
 import (
 	"fmt"
 
+	"github.com/forbole/callisto/v4/modules/pricefeed"
+	"github.com/forbole/callisto/v4/types"
 	"github.com/rs/zerolog/log"
 )
 
@@ -16,7 +18,13 @@ func (m *Module) UpdateBalances(addresses []string, height int64) error {
 		return fmt.Errorf("error while getting account balances: %s", err)
 	}
 
-	err = m.db.SaveTopAccountsBalance("available", balances)
+	nativeTokenAmounts := make([]types.NativeTokenAmount, len(balances))
+	for index, balance := range balances {
+		denomAmount := balance.Balance.AmountOf(pricefeed.GetDenom())
+		nativeTokenAmounts[index] = types.NewNativeTokenAmount(balance.Address, denomAmount, height)
+	}
+
+	err = m.db.SaveTopAccountsBalance("available", nativeTokenAmounts)
 	if err != nil {
 		return fmt.Errorf("error while saving top accounts available balances: %s", err)
 	}

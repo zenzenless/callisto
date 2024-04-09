@@ -1,13 +1,15 @@
 package database_test
 
 import (
-	tmtypes "github.com/tendermint/tendermint/proto/tendermint/types"
+	tmtypes "github.com/cometbft/cometbft/proto/tendermint/types"
+
+	"github.com/forbole/callisto/v4/types"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	dbtypes "github.com/forbole/bdjuno/v4/database/types"
-	"github.com/forbole/bdjuno/v4/types"
+
+	dbtypes "github.com/forbole/callisto/v4/database/types"
 )
 
 func newDecPts(value int64, prec int64) *sdk.Dec {
@@ -721,9 +723,9 @@ func (suite *DbTestSuite) TestSaveDoubleVoteEvidence() {
 		"cosmosvaloper1rcp29q3hpd246n6qak7jluqep4v006cdsc2kkl",
 		"cosmosvalconspub1zcjduepq7mft6gfls57a0a42d7uhx656cckhfvtrlmw744jv4q0mvlv0dypskehfk8",
 	)
-
+	var evidences []types.DoubleSignEvidence
 	// Insert data
-	evidence := types.NewDoubleSignEvidence(
+	evidences = append(evidences, types.NewDoubleSignEvidence(
 		10,
 		types.NewDoubleSignVote(
 			int(tmtypes.PrevoteType),
@@ -743,8 +745,9 @@ func (suite *DbTestSuite) TestSaveDoubleVoteEvidence() {
 			1,
 			"A5m7SVuvZ8YNXcUfBKLgkeV+Vy5ea+7rPfzlbkEvHOPPce6B7A2CwOIbCmPSVMKUarUdta+HiyTV+IELaOYyDA==",
 		),
+	),
 	)
-	err := suite.database.SaveDoubleSignEvidence(evidence)
+	err := suite.database.SaveDoubleSignEvidences(evidences)
 	suite.Require().NoError(err)
 
 	// Verify insertion

@@ -7,21 +7,21 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/forbole/bdjuno/v4/modules/bank"
-	"github.com/forbole/bdjuno/v4/modules/distribution"
-	"github.com/forbole/bdjuno/v4/modules/staking"
-	topaccounts "github.com/forbole/bdjuno/v4/modules/top_accounts"
-	modulestypes "github.com/forbole/bdjuno/v4/modules/types"
-	"github.com/forbole/bdjuno/v4/types"
+	"github.com/forbole/callisto/v4/modules/bank"
+	"github.com/forbole/callisto/v4/modules/distribution"
+	"github.com/forbole/callisto/v4/modules/staking"
+	topaccounts "github.com/forbole/callisto/v4/modules/top_accounts"
+	modulestypes "github.com/forbole/callisto/v4/modules/types"
+	"github.com/forbole/callisto/v4/types"
 	"github.com/rs/zerolog/log"
 
-	parsecmdtypes "github.com/forbole/juno/v4/cmd/parse/types"
-	"github.com/forbole/juno/v4/parser"
-	"github.com/forbole/juno/v4/types/config"
+	parsecmdtypes "github.com/forbole/juno/v5/cmd/parse/types"
+	"github.com/forbole/juno/v5/parser"
+	"github.com/forbole/juno/v5/types/config"
 	"github.com/spf13/cobra"
 
-	"github.com/forbole/bdjuno/v4/database"
-	"github.com/forbole/bdjuno/v4/modules/auth"
+	"github.com/forbole/callisto/v4/database"
+	"github.com/forbole/callisto/v4/modules/auth"
 )
 
 var (

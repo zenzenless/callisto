@@ -6,15 +6,15 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
-	juno "github.com/forbole/juno/v4/types"
-	"github.com/gogo/protobuf/proto"
+	"github.com/cosmos/gogoproto/proto"
+	juno "github.com/forbole/juno/v5/types"
 	"github.com/rs/zerolog/log"
 
 	authttypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 
-	"github.com/forbole/bdjuno/v4/modules/utils"
-	"github.com/forbole/bdjuno/v4/types"
+	"github.com/forbole/callisto/v4/modules/utils"
+	"github.com/forbole/callisto/v4/types"
 )
 
 // HandleMsgExec implements modules.AuthzMessageModule

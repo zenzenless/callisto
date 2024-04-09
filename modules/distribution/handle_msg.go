@@ -3,7 +3,7 @@ package distribution
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
-	juno "github.com/forbole/juno/v4/types"
+	juno "github.com/forbole/juno/v5/types"
 
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 )

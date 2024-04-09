@@ -2,17 +2,20 @@ package gov
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
-	"github.com/forbole/bdjuno/v4/types"
+	"github.com/forbole/callisto/v4/types"
+	"google.golang.org/grpc/codes"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
 
+	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
-	juno "github.com/forbole/juno/v4/types"
+	juno "github.com/forbole/juno/v5/types"
 )
 
 // HandleMsgExec implements modules.AuthzMessageModule
@@ -62,7 +65,44 @@ func (m *Module) handleSubmitProposalEvent(tx *juno.Tx, proposer string, events 
 	// Get the proposal
 	proposal, err := m.source.Proposal(tx.Height, proposalID)
 	if err != nil {
-		return fmt.Errorf("error while getting proposal: %s", err)
+		if strings.Contains(err.Error(), codes.NotFound.String()) {
+			// query the proposal details using the latest height stored in db
+			// to fix the rpc error returning code = NotFound desc = proposal x doesn't exist
+			block, err := m.db.GetLastBlockHeightAndTimestamp()
+			if err != nil {
+				return fmt.Errorf("error while getting latest block height: %s", err)
+			}
+			proposal, err = m.source.Proposal(block.Height, proposalID)
+			if err != nil {
+				return fmt.Errorf("error while getting proposal: %s", err)
+			}
+		} else {
+			return fmt.Errorf("error while getting proposal: %s", err)
+		}
+	}
+
+	var addresses []types.Account
+	for _, msg := range proposal.Messages {
+		var sdkMsg sdk.Msg
+		err := m.cdc.UnpackAny(msg, &sdkMsg)
+		if err != nil {
+			return fmt.Errorf("error while unpacking proposal message: %s", err)
+		}
+
+		switch msg := sdkMsg.(type) {
+		case *distrtypes.MsgCommunityPoolSpend:
+			addresses = append(addresses, types.NewAccount(msg.Recipient))
+		case *govtypesv1.MsgExecLegacyContent:
+			content, ok := msg.Content.GetCachedValue().(*distrtypes.CommunityPoolSpendProposal)
+			if ok {
+				addresses = append(addresses, types.NewAccount(content.Recipient))
+			}
+		}
+	}
+
+	err = m.db.SaveAccounts(addresses)
+	if err != nil {
+		return fmt.Errorf("error while storing proposal recipient: %s", err)
 	}
 
 	// Unpack the proposal interfaces
@@ -73,13 +113,14 @@ func (m *Module) handleSubmitProposalEvent(tx *juno.Tx, proposer string, events 
 
 	// Store the proposal
 	proposalObj := types.NewProposal(
-		proposal.ProposalId,
-		proposal.GetContent().ProposalRoute(),
-		proposal.GetContent().ProposalType(),
-		proposal.GetContent(),
+		proposal.Id,
+		proposal.Title,
+		proposal.Summary,
+		proposal.Metadata,
+		proposal.Messages,
 		proposal.Status.String(),
-		proposal.SubmitTime,
-		proposal.DepositEndTime,
+		*proposal.SubmitTime,
+		*proposal.DepositEndTime,
 		proposal.VotingStartTime,
 		proposal.VotingEndTime,
 		proposer,
@@ -112,7 +153,7 @@ func (m *Module) handleDepositEvent(tx *juno.Tx, depositor string, events sdk.St
 	}
 
 	return m.db.SaveDeposits([]types.Deposit{
-		types.NewDeposit(proposalID, depositor, deposit.Amount, txTimestamp, tx.Height),
+		types.NewDeposit(proposalID, depositor, deposit.Amount, txTimestamp, tx.TxHash, tx.Height),
 	})
 }
 
@@ -130,12 +171,18 @@ func (m *Module) handleVoteEvent(tx *juno.Tx, voter string, events sdk.StringEve
 	}
 
 	// Get the vote option
-	voteOption, err := VoteOptionFromEvents(events)
+	weightVoteOption, err := WeightVoteOptionFromEvents(events)
 	if err != nil {
 		return fmt.Errorf("error while getting vote option: %s", err)
 	}
 
-	vote := types.NewVote(proposalID, voter, voteOption, txTimestamp, tx.Height)
+	vote := types.NewVote(proposalID, voter, weightVoteOption.Option, weightVoteOption.Weight, txTimestamp, tx.Height)
 
-	return m.db.SaveVote(vote)
+	err = m.db.SaveVote(vote)
+	if err != nil {
+		return fmt.Errorf("error while saving vote: %s", err)
+	}
+
+	// update tally result for given proposal
+	return m.UpdateProposalTallyResult(proposalID, tx.Height)
 }

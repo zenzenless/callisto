@@ -3,8 +3,8 @@ package database
 import (
 	"fmt"
 
-	dbutils "github.com/forbole/bdjuno/v4/database/utils"
-	"github.com/forbole/bdjuno/v4/types"
+	dbutils "github.com/forbole/callisto/v4/database/utils"
+	"github.com/forbole/callisto/v4/types"
 )
 
 // SaveTopAccounts saves top accounts inside the database

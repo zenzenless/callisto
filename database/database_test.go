@@ -9,22 +9,24 @@ import (
 	"testing"
 	"time"
 
-	dbconfig "github.com/forbole/juno/v4/database/config"
-	"github.com/forbole/juno/v4/logging"
+	"github.com/cheqd/cheqd-node/app"
+	dbconfig "github.com/forbole/juno/v5/database/config"
+	"github.com/forbole/juno/v5/logging"
 
-	junodb "github.com/forbole/juno/v4/database"
+	junodb "github.com/forbole/juno/v5/database"
 
-	"github.com/forbole/bdjuno/v4/database"
-	"github.com/forbole/bdjuno/v4/types"
+	"github.com/forbole/callisto/v4/database"
+	"github.com/forbole/callisto/v4/types"
+	"github.com/forbole/callisto/v4/types/config"
 
-	juno "github.com/forbole/juno/v4/types"
+	juno "github.com/forbole/juno/v5/types"
 
+	tmversion "github.com/cometbft/cometbft/proto/tendermint/version"
+	tmctypes "github.com/cometbft/cometbft/rpc/core/types"
+	tmtypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	tmversion "github.com/tendermint/tendermint/proto/tendermint/version"
-	tmctypes "github.com/tendermint/tendermint/rpc/core/types"
-	tmtypes "github.com/tendermint/tendermint/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/stretchr/testify/suite"
 
 	_ "github.com/proullon/ramsql/driver"
@@ -41,12 +43,12 @@ type DbTestSuite struct {
 }
 
 func (suite *DbTestSuite) SetupTest() {
-	// Create the codec
-	codec := simapp.MakeTestEncodingConfig()
+	// Create the encodingConfig
+	encodingConfig := config.MakeEncodingConfig([]module.BasicManager{app.ModuleBasics})()
 
 	// Build the database
 	dbCfg := dbconfig.NewDatabaseConfig(
-		"postgresql://bdjuno:password@localhost:6433/bdjuno?sslmode=disable&search_path=public",
+		"postgresql://callisto:password@localhost:6433/callisto?sslmode=disable&search_path=public",
 		"",
 		"",
 		"",
@@ -56,7 +58,7 @@ func (suite *DbTestSuite) SetupTest() {
 		100000,
 		100,
 	)
-	db, err := database.Builder(junodb.NewContext(dbCfg, &codec, logging.DefaultLogger()))
+	db, err := database.Builder(junodb.NewContext(dbCfg, encodingConfig, logging.DefaultLogger()))
 	suite.Require().NoError(err)
 
 	bigDipperDb, ok := (db).(*database.Db)

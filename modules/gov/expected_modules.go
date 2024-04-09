@@ -1,15 +1,11 @@
 package gov
 
 import (
+	tmctypes "github.com/cometbft/cometbft/rpc/core/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	tmctypes "github.com/tendermint/tendermint/rpc/core/types"
 
-	"github.com/forbole/bdjuno/v4/types"
+	"github.com/forbole/callisto/v4/types"
 )
-
-type AuthModule interface {
-	RefreshAccounts(height int64, addresses []string) error
-}
 
 type DistrModule interface {
 	UpdateParams(height int64) error

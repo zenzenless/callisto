@@ -7,11 +7,10 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/forbole/juno/v4/node/local"
+	"github.com/forbole/juno/v5/node/local"
 
-	"github.com/forbole/bdjuno/v4/modules/bank/source"
-	"github.com/forbole/bdjuno/v4/modules/pricefeed"
-	"github.com/forbole/bdjuno/v4/types"
+	"github.com/forbole/callisto/v4/modules/bank/source"
+	"github.com/forbole/callisto/v4/types"
 )
 
 var (
@@ -32,30 +31,21 @@ func NewSource(source *local.Source, bk banktypes.QueryServer) *Source {
 	}
 }
 
-// GetBalances implements bankkeeper.Source
-func (s Source) GetBalances(addresses []string, height int64) ([]types.NativeTokenAmount, error) {
+// GetBalances implements keeper.Source
+func (s Source) GetBalances(addresses []string, height int64) ([]types.AccountBalance, error) {
 	ctx, err := s.LoadHeight(height)
 	if err != nil {
 		return nil, fmt.Errorf("error while loading height: %s", err)
 	}
 
-	var balances []types.NativeTokenAmount
+	var balances []types.AccountBalance
 	for _, address := range addresses {
-		balRes, err := s.q.Balance(
-			sdk.WrapSDKContext(ctx),
-			&banktypes.QueryBalanceRequest{
-				Address: address,
-				Denom:   pricefeed.GetDenom(),
-			})
+		res, err := s.q.AllBalances(sdk.WrapSDKContext(ctx), &banktypes.QueryAllBalancesRequest{Address: address})
 		if err != nil {
-			return nil, fmt.Errorf("error while getting balance: %s", err)
+			return nil, err
 		}
 
-		balances = append(balances, types.NewNativeTokenAmount(
-			address,
-			balRes.Balance.Amount,
-			height,
-		))
+		balances = append(balances, types.NewAccountBalance(address, res.Balances, height))
 	}
 
 	return balances, nil

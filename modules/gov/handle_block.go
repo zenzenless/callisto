@@ -3,15 +3,15 @@ package gov
 import (
 	"fmt"
 	"strconv"
-	"time"
 
-	juno "github.com/forbole/juno/v4/types"
+	juno "github.com/forbole/juno/v5/types"
 
-	tmctypes "github.com/tendermint/tendermint/rpc/core/types"
+	tmctypes "github.com/cometbft/cometbft/rpc/core/types"
 
+	abci "github.com/cometbft/cometbft/abci/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+
 	"github.com/rs/zerolog/log"
-	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 // HandleBlock implements modules.BlockModule
@@ -19,17 +19,18 @@ func (m *Module) HandleBlock(
 	b *tmctypes.ResultBlock, blockResults *tmctypes.ResultBlockResults, txs []*juno.Tx, vals *tmctypes.ResultValidators,
 ) error {
 	txEvents := collectTxEvents(txs)
-	err := m.updateProposalsStatus(b.Block.Height, b.Block.Time, txEvents, blockResults.EndBlockEvents, vals)
+	err := m.updateProposalsStatus(b.Block.Height, txEvents, blockResults.EndBlockEvents, vals)
 	if err != nil {
 		log.Error().Str("module", "gov").Int64("height", b.Block.Height).
 			Err(err).Msg("error while updating proposals")
 	}
+
 	return nil
 }
 
 // updateProposalsStatus updates the status of proposals if they have been included in the EndBlockEvents or status
 // was changed from deposit to voting
-func (m *Module) updateProposalsStatus(height int64, blockTime time.Time, txEvents, endBlockEvents []abci.Event, blockVals *tmctypes.ResultValidators) error {
+func (m *Module) updateProposalsStatus(height int64, txEvents, endBlockEvents []abci.Event, blockVals *tmctypes.ResultValidators) error {
 	var ids []uint64
 	// check if EndBlockEvents contains active_proposal event
 	endBlockIDs, err := findProposalIDsInEvents(endBlockEvents, govtypes.EventTypeActiveProposal, govtypes.AttributeKeyProposalID)
@@ -54,7 +55,7 @@ func (m *Module) updateProposalsStatus(height int64, blockTime time.Time, txEven
 
 	// update status for proposals IDs stored in ids array
 	for _, id := range ids {
-		err = m.UpdateProposal(height, blockTime, id)
+		err := m.UpdateProposalStatus(height, id)
 		if err != nil {
 			return fmt.Errorf("error while updating proposal: %s", err)
 		}
@@ -69,6 +70,7 @@ func (m *Module) updateProposalsStatus(height int64, blockTime time.Time, txEven
 			return fmt.Errorf("error while updating proposal validator statuses snapshots: %s", err)
 		}
 	}
+
 	return nil
 }
 
@@ -79,11 +81,11 @@ func findProposalIDsInEvents(events []abci.Event, eventType, attrKey string) ([]
 			continue
 		}
 		for _, attr := range event.Attributes {
-			if string(attr.Key) != attrKey {
+			if attr.Key != attrKey {
 				continue
 			}
 			// parse proposal ID from []byte to unit64
-			id, err := strconv.ParseUint(string(attr.Value), 10, 64)
+			id, err := strconv.ParseUint(attr.Value, 10, 64)
 			if err != nil {
 				return nil, fmt.Errorf("error while parsing proposal id: %s", err)
 			}
