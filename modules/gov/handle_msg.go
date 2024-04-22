@@ -184,5 +184,10 @@ func (m *Module) handleVoteEvent(tx *juno.Tx, voter string, events sdk.StringEve
 	}
 
 	// update tally result for given proposal
-	return m.UpdateProposalTallyResult(proposalID, tx.Height)
+	err = m.UpdateProposalTallyResult(proposalID, tx.Height)
+	if err != nil {
+		return err
+	}
+
+	return m.UpdateProposalStakingPoolSnapshot(tx.Height, proposalID)
 }
