@@ -60,7 +60,7 @@ stop-docker-test:
 
 start-docker-test: stop-docker-test
 	@echo "Starting Docker container..."
-	@docker run --name callisto-test-db -e POSTGRES_USER=callisto -e POSTGRES_PASSWORD=password -e POSTGRES_DB=callisto -d -p 6433:5432 postgres
+	@docker run --name callisto-test-db -e POSTGRES_USER=callisto -e POSTGRES_PASSWORD=password -e POSTGRES_DB=callisto -d -v ./database/schema:/docker-entrypoint-initdb.d -p 6433:5432 postgres
 .PHONY: start-docker-test
 
 test-unit: start-docker-test
