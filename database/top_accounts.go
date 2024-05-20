@@ -9,7 +9,7 @@ import (
 
 // SaveTopAccounts saves top accounts inside the database
 func (db *Db) SaveTopAccounts(accounts []types.TopAccount, height int64) error {
-	paramsNumber := 4
+	paramsNumber := 3
 	slices := dbutils.SplitTopAccounts(accounts, paramsNumber)
 
 	for _, accounts := range slices {
