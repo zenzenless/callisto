@@ -43,6 +43,9 @@ func (m *Module) HandleMsg(index int, msg sdk.Msg, tx *juno.Tx) error {
 	case *stakingtypes.MsgUndelegate:
 		return m.handleMsgUndelegate(cosmosMsg.DelegatorAddress, tx.Height)
 
+	case *stakingtypes.MsgCancelUnbondingDelegation:
+		return m.handleMsgCancelUnbondingDelegation(cosmosMsg.DelegatorAddress, tx.Height)
+
 	// Handle x/distribution delegator rewards
 	case *distritypes.MsgWithdrawDelegatorReward:
 		return m.handleMsgWithdrawDelegatorReward(cosmosMsg.DelegatorAddress, tx.Height)
@@ -76,6 +79,31 @@ func (m *Module) handleMsgUndelegate(delAddr string, height int64) error {
 	err = m.refreshTopAccountsSum([]string{delAddr}, height)
 	if err != nil {
 		return fmt.Errorf("error while refreshing top accounts sum while handling MsgUndelegate: %s", err)
+	}
+
+	return nil
+}
+
+// handleMsgCancelUnbondingDelegation handles a MsgCancelUnbondingDelegation storing the data inside the database
+func (m *Module) handleMsgCancelUnbondingDelegation(delAddr string, height int64) error {
+	err := m.stakingModule.RefreshDelegations(delAddr, height)
+	if err != nil {
+		return fmt.Errorf("error while refreshing delegations of account %s, error: %s", delAddr, err)
+	}
+
+	err = m.stakingModule.RefreshUnbondings(delAddr, height)
+	if err != nil {
+		return fmt.Errorf("error while refreshing unbonding delegations of account %s, error: %s", delAddr, err)
+	}
+
+	err = m.bankModule.UpdateBalances([]string{delAddr}, height)
+	if err != nil {
+		return fmt.Errorf("error while refreshing balance of account %s, error: %s", delAddr, err)
+	}
+
+	err = m.refreshTopAccountsSum([]string{delAddr}, height)
+	if err != nil {
+		return fmt.Errorf("error while refreshing top accounts sum %s, error: %s", delAddr, err)
 	}
 
 	return nil
