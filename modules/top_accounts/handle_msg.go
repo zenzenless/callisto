@@ -2,7 +2,6 @@ package top_accounts
 
 import (
 	"fmt"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	distritypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
@@ -42,7 +41,7 @@ func (m *Module) HandleMsg(index int, msg sdk.Msg, tx *juno.Tx) error {
 		return m.handleMsgDelegate(cosmosMsg.DelegatorAddress, tx.Height)
 
 	case *stakingtypes.MsgUndelegate:
-		return m.handleMsgUndelegate(tx, index, cosmosMsg.DelegatorAddress)
+		return m.handleMsgUndelegate(cosmosMsg.DelegatorAddress, tx.Height)
 
 	// Handle x/distribution delegator rewards
 	case *distritypes.MsgWithdrawDelegatorReward:
@@ -68,36 +67,16 @@ func (m *Module) handleMsgDelegate(delAddr string, height int64) error {
 }
 
 // handleMsgUndelegate handles a MsgUndelegate storing the data inside the database
-func (m *Module) handleMsgUndelegate(tx *juno.Tx, index int, delAddr string) error {
-	err := m.stakingModule.RefreshUnbondings(delAddr, tx.Height)
+func (m *Module) handleMsgUndelegate(delAddr string, height int64) error {
+	err := m.stakingModule.RefreshUnbondings(delAddr, height)
 	if err != nil {
 		return fmt.Errorf("error while refreshing undelegations while handling MsgUndelegate: %s", err)
 	}
 
-	err = m.refreshTopAccountsSum([]string{delAddr}, tx.Height)
+	err = m.refreshTopAccountsSum([]string{delAddr}, height)
 	if err != nil {
 		return fmt.Errorf("error while refreshing top accounts sum while handling MsgUndelegate: %s", err)
 	}
-
-	event, err := tx.FindEventByType(index, stakingtypes.EventTypeUnbond)
-	if err != nil {
-		return err
-	}
-
-	completionTimeStr, err := tx.FindAttributeByKey(event, stakingtypes.AttributeKeyCompletionTime)
-	if err != nil {
-		return err
-	}
-
-	completionTime, err := time.Parse(time.RFC3339, completionTimeStr)
-	if err != nil {
-		return err
-	}
-
-	// When the time expires, refresh the delegations & unbondings & available balance
-	time.AfterFunc(time.Until(completionTime), m.refreshDelegations(delAddr, tx.Height))
-	time.AfterFunc(time.Until(completionTime), m.refreshUnbondings(delAddr, tx.Height))
-	time.AfterFunc(time.Until(completionTime), m.refreshBalance(delAddr, tx.Height))
 
 	return nil
 }
