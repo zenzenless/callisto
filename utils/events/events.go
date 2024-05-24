@@ -4,6 +4,17 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// FilterEvents returns the events with the given types
+func FilterEvents(events sdk.StringEvents, eventTypes string) sdk.StringEvents {
+	var filteredEvents sdk.StringEvents
+	for _, event := range events {
+		if event.Type == eventTypes {
+			filteredEvents = append(filteredEvents, event)
+		}
+	}
+	return filteredEvents
+}
+
 // FindEventByType returns the event with the given type
 func FindEventByType(events sdk.StringEvents, eventType string) (sdk.StringEvent, bool) {
 	for _, event := range events {
