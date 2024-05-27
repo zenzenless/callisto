@@ -11,10 +11,9 @@ import (
 )
 
 var (
-	_ modules.Module                   = &Module{}
-	_ modules.BlockModule              = &Module{}
-	_ modules.MessageModule            = &Module{}
-	_ modules.PeriodicOperationsModule = &Module{}
+	_ modules.Module        = &Module{}
+	_ modules.BlockModule   = &Module{}
+	_ modules.MessageModule = &Module{}
 )
 
 // Module represent x/top_accounts module
